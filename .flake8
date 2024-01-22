@@ -1,0 +1,26 @@
+[flake8]
+exclude = 
+    .git,
+    __pycache__
+extend-ignore = 
+    # 2 lines between functions
+    E303,
+     # Too many empty lines
+    W191,
+    # Spaces around equals sign for parameters
+    E251,
+    E131,
+    # Module level import at top of file
+    E402,
+    # Blank line contains whitespace
+    W293,
+    # Closing bracket does not match visual indentation
+    E124,
+    # Block comment should start with "# "
+    E265,
+    # Missing whitespace after ":"
+    E231,
+    # White space before and after "(" and ")"
+    E201, E202,
+    # Multiple statements in one line
+    E701
