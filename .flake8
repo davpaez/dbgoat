@@ -1,9 +1,12 @@
 [flake8]
+
 exclude = 
     .git,
     __pycache__,
     docs,
-    dist
+    dist,
+    .venv
+
 extend-ignore = 
     # 2 lines between functions
     E303,
