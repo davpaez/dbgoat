@@ -1,7 +1,7 @@
-# dbpal
-A simple database manager
+# dbgoat
+A simple interface for managing databases
 
-The vision for dbpal is to make management so easy, that a database becomes
+The vision for dbgoat is to make management so easy, that a database becomes
 as simple as a variable in modern programming languages.
 
 
