@@ -23,4 +23,6 @@ extend-ignore =
     # White space before and after "(" and ")"
     E201, E202,
     # Multiple statements in one line
-    E701
+    E701,
+    # Line too long
+    E501,
