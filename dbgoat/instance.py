@@ -1,6 +1,5 @@
 import time
 import sqlite3
-from abc import ABC, abstractmethod
 
 from mysql.connector import (
 	connection as mysql_conn, 
