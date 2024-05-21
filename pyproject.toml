@@ -1,0 +1,33 @@
+[project]
+name = "dbgoat"
+version = "0.0.1"
+authors = [
+  { name="David Páez", email="hello@davidpaez.co" },
+]
+description = "A simple interface for managing databases"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Topic :: Software Development :: Libraries",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Development Status :: 3 - Alpha",
+]
+keywords = ["database"]
+
+[project.optional-dependencies]
+mysql = ["mysql-connector-python>=8.3.0"]
+dev = ["build"]
+
+[project.urls]
+Homepage = "https://github.com/davpaez/dbgoat"
+Repository = "https://github.com/davpaez/dbgoat"
+Issues = "https://github.com/davpaez/dbgoat/issues"
+
+
+[build-system]
+requires = ["setuptools >= 66.0.0"]
+build-backend = "setuptools.build_meta"
