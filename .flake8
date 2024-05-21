@@ -1,7 +1,9 @@
 [flake8]
 exclude = 
     .git,
-    __pycache__
+    __pycache__,
+    docs,
+    dist
 extend-ignore = 
     # 2 lines between functions
     E303,
