@@ -1,0 +1,14 @@
+{
+	// Testing settings -----------------------------
+
+	"python.testing.unittestArgs": [
+		"-v", // Verbose
+		"-s", "./tests", // Start directory
+		"-p", "test_*.py", // Pattern
+		"-t", "${workspaceFolder}" // Top level directory
+	],
+	"python.testing.pytestEnabled": false,
+	"python.testing.unittestEnabled": true,
+
+	// "python.envFile": "${workspaceFolder}/.env", // Not necessary if -t flag is used for unittest command
+}
