@@ -32,3 +32,7 @@ venv/
 # SublimeText
 *.sublime-workspace
 *.sublime-project
+
+#  ---------- Distribution / packaging -------------
+dist/
+*.egg-info/
