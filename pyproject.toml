@@ -20,7 +20,7 @@ keywords = ["database"]
 
 [project.optional-dependencies]
 mysql = ["mysql-connector-python>=8.3.0"]
-dev = ["build"]
+dev = ["build>=1.2.1", "twine>=5.1.0"]
 
 [project.urls]
 Homepage = "https://github.com/davpaez/dbgoat"
