@@ -14,7 +14,6 @@
 	
 	// Files that are NOT shown in the workspace file explorer
 	"files.exclude": {
-		"**/miniconda3/**": true, // Necessary hack for excluding linter errors from libraries
 		"**/__pycache__/**": true,
 		"**/*.egg-info/**": true,
 	},
