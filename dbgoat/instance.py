@@ -1,5 +1,4 @@
 import time
-import sqlite3
 
 from mysql.connector import (
 	connection as mysql_conn, 
@@ -35,54 +34,6 @@ class DBInstance:
 		print('Connection closed.')
 		if self.cnx:
 			self.cnx.close()
-
-
-class SQLiteDBInstance(DBInstance):
-	def __init__(self, path=None, schema=None):
-		super().__init__(schema=schema)
-		self.path = path
-
-		self._connect()
-
-	def initialize(self):
-		# TODO: Generalize this. See MySQLDBInstance.initialize()
-		query = self.schema['tables']['Records']
-		self.write(query)
-
-	def _connect(self):
-		# Inicializar conexión
-		try:
-			if self.path:
-				cnx = sqlite3._connect(self.path)
-			else:
-				cnx = sqlite3._connect(':memory:')
-		except Exception as e:
-			print(e)
-			if cnx: cnx.close()
-		else:
-			print(cnx)
-			self.cnx = cnx
-
-	def write(self, query, params='', many=False):
-		cur = self.cnx.cursor()
-		if many:
-			pass
-		else:
-			cur.execute(query, params)
-
-		self.cnx.commit()
-		cur.close()
-
-	def read(self, query, params='', many=False):
-		cur = self.cnx.cursor()
-		if many:
-			pass
-		else:
-			cur.execute(query, params)
-
-		results = cur.fetchall()
-		cur.close()
-		return results
 
 
 class MySQLDBInstance(DBInstance):
