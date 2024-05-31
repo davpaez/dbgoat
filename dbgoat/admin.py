@@ -2,12 +2,15 @@ import subprocess
 from abc import ABC, abstractmethod
 import warnings
 import re
+import logging
 
 from mysql.connector import (
 	connection as mysql_conn,
 	Error as mysql_error,
 	errorcode as mysql_errorcode
 )
+
+logger = logging.getLogger('dbgoat')
 
 
 class DBAdmin(ABC):
@@ -35,7 +38,7 @@ class DBAdmin(ABC):
 				id_cnx = id(self.cnx)
 				self.cnx.close()
 			self.cnx = None
-			print(f'Connection id={id_cnx} closed')
+			logger.info(f'Connection id={id_cnx} closed')
 
 
 	def __del__(self):
@@ -100,8 +103,7 @@ class DBAdmin(ABC):
 		
 		cmd_chain = self.buildCommand(tool, **kwargs)
 		
-		print('Executing the following command:')
-		print(cmd_chain, '\n')
+		logger.info(f'Executing the following command:\n{cmd_chain}\n')
 		self.runShellCommand(cmd_chain, shell=shell, input=input)
 	
 
@@ -176,12 +178,12 @@ class MySQLDBAdmin(DBAdmin):
 			cnx = mysql_conn.MySQLConnection(**creds_subset)
 		except mysql_error as err:
 			if err.errno == mysql_errorcode.ER_ACCESS_DENIED_ERROR:
-				print("Something is wrong with your user name or password")
+				logger.error("Something is wrong with your user name or password")
 			else:
-				print(err)
+				logger.error(err)
 		else:
 			id_cnx = id(cnx)
-			print(f"Connection id={id_cnx} established to MySQL Server")
+			logger.info(f"Connection id={id_cnx} established to MySQL Server")
 			self.cnx = cnx
 
 
@@ -189,8 +191,8 @@ class MySQLDBAdmin(DBAdmin):
 		"""Create a MySQL database"""
 		if db_name in self.listAllDBs():
 			if overwrite:
+				logger.warn(f"Database '{db_name}' already exists. It will be deleted and recreated")
 				self.delete(db_name)
-				warnings.warn(f"Database '{db_name}' already exists. It will be deleted and recreated")
 			else:
 				raise ValueError(f"Database '{db_name}' already exists")
 		
@@ -204,6 +206,7 @@ class MySQLDBAdmin(DBAdmin):
 			cur.execute(statement)
 		
 		self.cnx.commit()
+		logger.info(f"Database '{db_name}' successfully created")
 
 
 	def delete(self, db_name) -> None:
@@ -216,8 +219,9 @@ class MySQLDBAdmin(DBAdmin):
 			self.cnx.commit()
 
 			
-			print(f'Database {db_name} successfully deleted')
+			logger.info(f'Database {db_name} successfully deleted')
 		else:
+			logger.warn(f"No operation was performed. The database '{db_name}' does not exist")
 			warnings.warn(
 				message=f"No operation was performed. The database '{db_name}' does not exist",
 				category=RuntimeWarning
@@ -307,6 +311,8 @@ class MySQLDBAdmin(DBAdmin):
 			input=sql_text.encode('utf-8'),
 			db_name=db_name
 		)
+
+		logger.info(f'Database {db_name} successfully restored')
 
 		return db_name
 
