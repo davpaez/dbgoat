@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 import warnings
 import re
 import logging
+from typing import Optional, Union
 
 from mysql.connector import (
 	connection as mysql_conn,
@@ -51,7 +52,7 @@ class DBAdmin(ABC):
 		self.closeConnection()
 
 
-	def buildCommand(self, tool, **kwargs):
+	def buildCommand(self, tool: str, **kwargs):
 		# Build command
 		executable = self.tools[tool]
 		cmd_chain = [executable]
@@ -89,7 +90,7 @@ class DBAdmin(ABC):
 		return cmd_chain
 
 
-	def issueCommand(self, tool, shell=False, input=None, **kwargs):
+	def issueCommand(self, tool: str, shell=False, input=None, **kwargs):
 		"""This function issues a command using one of
 		the tools in self.tools
 		Example:
@@ -107,7 +108,7 @@ class DBAdmin(ABC):
 		self.runShellCommand(cmd_chain, shell=shell, input=input)
 	
 
-	def runShellCommand(self, command, shell=False, input=None):
+	def runShellCommand(self, command: Union[str, list], shell=False, input=None):
 		subprocess.run(command, shell=shell, input=input)
 
 
@@ -121,6 +122,10 @@ class DBAdmin(ABC):
 
 	@abstractmethod
 	def listAllDBs(self):
+		pass
+
+	@abstractmethod
+	def restore(self):
 		pass
 	
 	@abstractmethod
@@ -187,7 +192,7 @@ class MySQLDBAdmin(DBAdmin):
 			self.cnx = cnx
 
 
-	def create(self, db_name, overwrite=False) -> None:
+	def create(self, db_name: str, overwrite=False) -> None:
 		"""Create a MySQL database"""
 		if db_name in self.listAllDBs():
 			if overwrite:
@@ -209,7 +214,7 @@ class MySQLDBAdmin(DBAdmin):
 		logger.info(f"Database '{db_name}' successfully created")
 
 
-	def delete(self, db_name) -> None:
+	def delete(self, db_name: str) -> None:
 		"""Delete a MySQL database"""
 		if db_name in self.listAllDBs():
 			statement = f'DROP DATABASE IF EXISTS {db_name}'
@@ -248,7 +253,7 @@ class MySQLDBAdmin(DBAdmin):
 		return databases
 
 
-	def restore(self, input_file, db_name=None) -> str:
+	def restore(self, input_file: str, db_name: Optional[str] = None) -> str:
 		"""Restore a MySQL database from a file
 		It is extpected that the input file contains at least a
 		CREATE DATABASE statement from which the name of the database can be
@@ -287,7 +292,7 @@ class MySQLDBAdmin(DBAdmin):
 		
 		self.create(db_name)
 		
-		def hasPattern(line):
+		def hasPattern(line: str):
 			patterns = [
 				r"DROP (?:DATABASE|SCHEMA) IF EXISTS [^;]+;",
 				r"CREATE (?:DATABASE|SCHEMA) [^;]+;",
@@ -317,7 +322,7 @@ class MySQLDBAdmin(DBAdmin):
 		return db_name
 
 
-	def export(self, db_name, output_file=None) -> str:
+	def export(self, db_name: str, output_file: Optional[str] = None) -> str:
 		"""Export one MySQL database
 		The resulting file does not have either:
 		- the CREATE DATABASE statement
@@ -341,7 +346,7 @@ class MySQLDBAdmin(DBAdmin):
 		return output_file
 
 
-	def duplicate(self, db_name, new_db_name) -> None:
+	def duplicate(self, db_name: str, new_db_name: str) -> None:
 		"""Duplicate a MySQL database"""
 
 		# Create a new database with new name
@@ -366,7 +371,7 @@ class MySQLDBAdmin(DBAdmin):
 		self.runShellCommand(cmd, shell=True)
 
 
-	def rename(self, db_name, new_db_name) -> None:
+	def rename(self, db_name: str, new_db_name: str) -> None:
 		"""Rename a MySQL database
 		Behind the scenes, it duplicates the database
 		and deletes the old one
