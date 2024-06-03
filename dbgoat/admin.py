@@ -1,15 +1,18 @@
-import subprocess
+import os
 from abc import ABC, abstractmethod
 import warnings
 import re
 import logging
-from typing import Optional, Union
+from typing import Optional
 
 from mysql.connector import (
 	connection as mysql_conn,
 	Error as mysql_error,
 	errorcode as mysql_errorcode
 )
+
+from dbgoat import auxiliar as aux
+
 
 logger = logging.getLogger('dbgoat')
 
@@ -28,7 +31,8 @@ class DBAdmin(ABC):
 			'statement': None
 		}
 		self.type = kwargs['type']
-		self.options_values = creds
+		self.options_values = creds.copy()
+		if 'database' in self.options_values: del self.options_values['database']
 		self.cnx = None
 		self._connect(**creds)
 
@@ -55,42 +59,18 @@ class DBAdmin(ABC):
 	def buildCommand(self, tool: str, **kwargs):
 		# Build command
 		executable = self.tools[tool]
-		cmd_chain = [executable]
 
-		# Combines the default options with the ones passed as arguments
-		options = self.options_values.copy()
-		options.update(kwargs)
-
-		def flatAppend(flat_list, something):
-			if isinstance(something, list):
-				for item in something:
-					if isinstance(item, list):
-						flatAppend(flat_list, item)
-					else:
-						flat_list.append(item)
-			else:
-				flat_list.append(something)
-		
-		# Compose default commands
-		for key, value in options.items():
-			if key in self.options_flags.keys():
-				if value:
-					cmd_chain.append(f'{self.options_flags[key]}={value}')
-				else:
-					cmd_chain.append(self.options_flags[key])
-			elif key.startswith('__'):
-				key = key.replace('_', '-')
-				if value is not None:
-					cmd_chain.append(f'{key}={value}')
-				else:
-					cmd_chain.append(key)
-			else:
-				flatAppend(cmd_chain, value)
+		cmd_chain = aux.buildCommand(
+			executable, 
+			self.options_values,
+			self.options_flags,
+			**kwargs
+		)
 		
 		return cmd_chain
 
 
-	def issueCommand(self, tool: str, shell=False, input=None, **kwargs):
+	def issueCommand(self, tool: str, shell=False, input=None, encoding='utf-8', **kwargs):
 		"""This function issues a command using one of
 		the tools in self.tools
 		Example:
@@ -101,15 +81,18 @@ class DBAdmin(ABC):
 				output='test.sql
 			)
 		"""
+
+		env = os.environ.copy()
+		passwd = self.options_values.pop('password')
+		env['MYSQL_PWD'] = passwd
 		
 		cmd_chain = self.buildCommand(tool, **kwargs)
 		
 		logger.info(f'Executing the following command:\n{cmd_chain}\n')
-		self.runShellCommand(cmd_chain, shell=shell, input=input)
-	
-
-	def runShellCommand(self, command: Union[str, list], shell=False, input=None):
-		subprocess.run(command, shell=shell, input=input)
+		cp = aux.runShellCommand(cmd_chain, shell=shell, input=input, encoding=encoding, env=env)
+		
+		self.options_values['password'] = passwd
+		return cp
 
 
 	@abstractmethod
@@ -251,19 +234,9 @@ class MySQLDBAdmin(DBAdmin):
 		self.cnx.commit()
 		
 		return databases
-
-
-	def restore(self, input_file: str, db_name: Optional[str] = None) -> str:
-		"""Restore a MySQL database from a file
-		It is extpected that the input file contains at least a
-		CREATE DATABASE statement from which the name of the database can be
-		extracted
-		Returns the name of the database restored
-		"""
-
-		with open(input_file, 'r', encoding='utf-8') as f:
-			sql_text = f.read()
-
+	
+	@staticmethod
+	def transformDump(db_name, sql_text):
 		# Check if text contains exactly one instance of a regex pattern
 		matches = re.findall("CREATE (?:SCHEMA|DATABASE) [^;\n]+;\n", sql_text)
 		if len(matches) > 1:
@@ -275,9 +248,9 @@ class MySQLDBAdmin(DBAdmin):
 		# Extract dabase name
 		matches = re.findall("USE (?P<backtick>`?)([^`;\n]+)(?P=backtick);\n", sql_text)
 		
-		if len(matches) > 1:
-			raise ValueError('The file is using multiple USE statements')
-		elif len(matches) < 1:
+		# if len(matches) > 1:
+		# 	raise ValueError('The file is using multiple USE statements')
+		if len(matches) < 1:
 			raise ValueError('The file does not contain the USE statement')
 
 		# The first slice finds the first full match, the second finds the last captured group
@@ -289,8 +262,6 @@ class MySQLDBAdmin(DBAdmin):
 			pass
 		else:
 			db_name = db_name_extracted
-		
-		self.create(db_name)
 		
 		def hasPattern(line: str):
 			patterns = [
@@ -310,11 +281,29 @@ class MySQLDBAdmin(DBAdmin):
 		# - USE DATABASE
 		lines = sql_text.splitlines()
 		sql_text = '\n'.join([line for line in lines if not hasPattern(line)])
-		
+
+		return db_name, sql_text
+
+
+	def restore(self, input_file: str, db_name: Optional[str] = None) -> str:
+		"""Restore a MySQL database from a file
+		It is extpected that the input file contains at least a
+		CREATE DATABASE statement from which the name of the database can be
+		extracted
+		Returns the name of the database restored
+		"""
+
+		with open(input_file, 'r', encoding='utf-8') as f:
+			sql_text = f.read()
+
+		db_name, sql_text = self.transformDump(db_name, sql_text)
+
+		self.create(db_name)
+
 		self.issueCommand(
 			'main',
-			input=sql_text.encode('utf-8'),
-			db_name=db_name
+			input=sql_text,#.encode('utf-8'),
+			database=db_name
 		)
 
 		logger.info(f'Database {db_name} successfully restored')
@@ -324,7 +313,7 @@ class MySQLDBAdmin(DBAdmin):
 
 	def export(self, db_name: str, output_file: Optional[str] = None) -> str:
 		"""Export one MySQL database
-		The resulting file does not have either:
+		The resulting file will have:
 		- the CREATE DATABASE statement
 		- the USE statement
 		Returns the absolute path of the output file
@@ -352,11 +341,18 @@ class MySQLDBAdmin(DBAdmin):
 		# Create a new database with new name
 		self.create(new_db_name)
 
+		# Remove password option temporarily
+		env = os.environ.copy()
+		passwd = self.options_values.pop('password')
+		env['MYSQL_PWD'] = passwd
+
 		# Command for dumping the database
+		# without CREATE or USE statements
 		cmd_dump = self.buildCommand(
 			'export',
 			__column_statistics=0,
-			db_name=db_name,
+			databases=None,
+			db_name=db_name
 		)
 
 		# Command for importing the database
@@ -365,11 +361,15 @@ class MySQLDBAdmin(DBAdmin):
 			database=new_db_name
 		)
 
-		# Composing the full command
-		cmd = f'{" ".join(cmd_dump)} | {" ".join(cmd_import)}'
+		# Dump and then import
+		completed_process = aux.runShellCommand(cmd_dump, encoding='utf-8', env=env)
+		sql_text = completed_process.stdout
+		_, sql_text = self.transformDump(new_db_name, sql_text)
+		aux.runShellCommand(cmd_import, input=sql_text, encoding='utf-8', env=env)
 
-		self.runShellCommand(cmd, shell=True)
-
+		# Restore password option
+		self.options_values['password'] = passwd
+	
 
 	def rename(self, db_name: str, new_db_name: str) -> None:
 		"""Rename a MySQL database
