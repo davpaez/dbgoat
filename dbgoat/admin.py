@@ -302,7 +302,7 @@ class MySQLDBAdmin(DBAdmin):
 
 		self.issueCommand(
 			'main',
-			input=sql_text,#.encode('utf-8'),
+			input=sql_text,
 			database=db_name
 		)
 
