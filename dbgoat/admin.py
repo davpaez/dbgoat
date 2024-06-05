@@ -20,7 +20,20 @@ logger = logging.getLogger('dbgoat')
 class DBAdmin(ABC):
 	"""This class is used to create, delete, duplicate and
 	rename databases"""
-	def __init__(self, creds, *args, **kwargs):
+	def __init__(self, dbms, creds):
+		# This argument determines the DBMS being used (mysql, sqlite, etc)
+		self.dbms = dbms
+
+		required_keys = ['host', 'port', 'user', 'password']
+		if required_keys != creds.keys():
+			if not (set(required_keys) <= set(creds.keys())):
+				raise ValueError("Invalid parameters to construct DBAdmin instance")
+			else:
+				logger.warn("The 'database' argument was ignored for constructing the DBAdmin instance")
+		
+		sanitized_creds = {key: creds[key] for key in required_keys}
+		self.options_values = sanitized_creds.copy()
+		
 		self.tools = dict()
 		self.options_flags = {
 			'host': None,
@@ -30,11 +43,9 @@ class DBAdmin(ABC):
 			'database': None,
 			'statement': None
 		}
-		self.type = kwargs['type']
-		self.options_values = creds.copy()
-		if 'database' in self.options_values: del self.options_values['database']
+
 		self.cnx = None
-		self._connect(**creds)
+		self._connect(sanitized_creds)
 
 
 	def closeConnection(self):
@@ -128,7 +139,7 @@ class DBAdmin(ABC):
 		pass
 
 	@abstractmethod
-	def _connect(self, **creds):
+	def _connect(self, creds):
 		pass
 
 			
@@ -137,8 +148,7 @@ class DBAdmin(ABC):
 
 class MySQLDBAdmin(DBAdmin):
 	def __init__(self, *args, **kwargs):
-		kwargs['type'] = 'mysql'
-		super().__init__(*args, **kwargs)
+		super().__init__('mysql', *args, **kwargs)
 
 		self.tools.update({
 			'main': 'mysql',
@@ -158,12 +168,9 @@ class MySQLDBAdmin(DBAdmin):
 		})
 
 
-	def _connect(self, **creds):
-		keys = ['host', 'port', 'user', 'password']
-		creds_subset = {key: creds[key] for key in keys}
-
+	def _connect(self, creds):
 		try:
-			cnx = mysql_conn.MySQLConnection(**creds_subset)
+			cnx = mysql_conn.MySQLConnection(**creds)
 		except mysql_error as err:
 			if err.errno == mysql_errorcode.ER_ACCESS_DENIED_ERROR:
 				logger.error("Something is wrong with your user name or password")
