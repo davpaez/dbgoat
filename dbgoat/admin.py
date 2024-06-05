@@ -60,13 +60,15 @@ class DBAdmin(ABC):
 	def __del__(self):
 		self.closeConnection()
 	
+
 	def __enter__(self):
 		return self
+	
 
 	def __exit__(self, exc_type, exc_value, traceback):
 		self.closeConnection()
-
-
+	
+	
 	def buildCommand(self, tool: str, **kwargs):
 		# Build command
 		executable = self.tools[tool]
@@ -141,8 +143,6 @@ class DBAdmin(ABC):
 	@abstractmethod
 	def _connect(self, creds):
 		pass
-
-			
 
 
 
@@ -242,6 +242,7 @@ class MySQLDBAdmin(DBAdmin):
 		
 		return databases
 	
+
 	@staticmethod
 	def transformDump(db_name, sql_text):
 		# Check if text contains exactly one instance of a regex pattern
