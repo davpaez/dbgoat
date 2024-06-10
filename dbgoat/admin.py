@@ -11,7 +11,7 @@ from mysql.connector import (
 	errorcode as mysql_errorcode
 )
 
-from dbgoat import auxiliar as aux
+from . import auxiliar as aux
 
 
 logger = logging.getLogger('dbgoat')
@@ -343,10 +343,12 @@ class MySQLDBAdmin(DBAdmin):
 		return output_file
 
 
-	def duplicate(self, db_name: str, new_db_name: str) -> None:
+	def duplicate(self, db_name: str, new_db_name: str, overwrite=False) -> None:
 		"""Duplicate a MySQL database"""
 
 		# Create a new database with new name
+		if overwrite is True:
+			self.delete(new_db_name)
 		self.create(new_db_name)
 
 		# Remove password option temporarily
