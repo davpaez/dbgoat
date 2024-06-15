@@ -1,4 +1,5 @@
 import time
+from typing import Callable
 
 from mysql.connector import (
 	connection as mysql_conn, 
@@ -110,7 +111,7 @@ class MySQLDBInstance(DBInstance):
 		cur.close()
 		return results
 
-	def read_to_pandas(self, read_sql, query, params=None, many=False):
+	def read_to_pandas(self, read_sql: Callable, query, params=None, many=False):
 		cur = self.cnx.cursor()
 		if many:
 			pass
