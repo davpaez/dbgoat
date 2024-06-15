@@ -111,16 +111,8 @@ class MySQLDBInstance(DBInstance):
 		cur.close()
 		return results
 
-	def read_to_pandas(self, read_sql: Callable, query, params=None, many=False):
-		cur = self.cnx.cursor()
-		if many:
-			pass
-		else:
-			#cur.execute(query, params)
-			df = read_sql(query, self.cnx)
-
-		#results = cur.fetchall()
-		cur.close()
+	def read_to_pandas(self, read_sql: Callable, query, params=None):
+		df = read_sql(query, self.cnx)
 		return df
 
 
