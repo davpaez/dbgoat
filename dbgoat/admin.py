@@ -398,3 +398,7 @@ class MySQLDBAdmin(DBAdmin):
 			__column_statistics=0,
 			__all_databases=None,
 		)
+
+
+class SQLiteDBAdmin(DBAdmin):
+	pass

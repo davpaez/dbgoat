@@ -121,3 +121,7 @@ class MySQLDBInstance(DBInstance):
 		#results = cur.fetchall()
 		cur.close()
 		return df
+
+
+class SQLiteDBInstance(DBInstance):
+	pass
