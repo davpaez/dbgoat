@@ -58,7 +58,8 @@ class DBAdmin(ABC):
 
 
 	def __del__(self):
-		self.closeConnection()
+		# self.closeConnection() # Produces error!
+		pass
 	
 
 	def __enter__(self):
@@ -210,10 +211,7 @@ class MySQLDBAdmin(DBAdmin):
 			statement = f'DROP DATABASE IF EXISTS {db_name}'
 			with self.cnx.cursor() as cur:
 				cur.execute(statement)
-			
 			self.cnx.commit()
-
-			
 			logger.info(f'Database {db_name} successfully deleted')
 		else:
 			logger.warn(f"No operation was performed. The database '{db_name}' does not exist")

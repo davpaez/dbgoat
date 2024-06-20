@@ -32,9 +32,10 @@ class DBInstance:
 		raise Exception('You must create a "delete" function in subclass')
 
 	def __del__(self):
-		print('Connection closed.')
-		if self.cnx:
-			self.cnx.close()
+		# print('Connection closed.')
+		# if self.cnx:
+		# 	self.cnx.close() # Produces error
+		pass
 
 
 class MySQLDBInstance(DBInstance):
