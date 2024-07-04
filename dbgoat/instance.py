@@ -16,26 +16,33 @@ class DBInstance:
 		self.db_name = kwargs.get('db_name')
 		self.schema = kwargs.get('schema')
 
+
 	def _connect(self):
 		raise Exception('You must create a "connect" function in subclass')
+
 
 	def write(self, query, params=None, many=False):
 		raise Exception('You must create a "write" function in subclass')
 
+
 	def read(self, query, params=None, many=False):
 		raise Exception('You must create a "read" function in subclass')
+
 
 	def initialize(self):
 		raise Exception('You must create a "initialize" function in subclass')
 
+
 	def delete(self):
 		raise Exception('You must create a "delete" function in subclass')
+
 
 	def __del__(self):
 		# print('Connection closed.')
 		# if self.cnx:
 		# 	self.cnx.close() # Produces error
 		pass
+
 
 
 class MySQLDBInstance(DBInstance):
@@ -45,6 +52,7 @@ class MySQLDBInstance(DBInstance):
 		):
 		super().__init__(db_name=database, schema=schema)
 		self._connect(host, port, user, password, database)
+
 
 	def _connect(self, host, port, user, password, database):
 		try:
@@ -62,6 +70,7 @@ class MySQLDBInstance(DBInstance):
 			print(f"Connection established to MySQL Database named: '{database}'")
 			self.cnx = cnx
 
+
 	def clear(self, delay=1):
 		# Reversed order to evade constraints
 		tables = reversed(list(self.schema['tables'].keys()))
@@ -75,6 +84,7 @@ class MySQLDBInstance(DBInstance):
 				#print(e)
 			time.sleep(delay)
 
+
 	def initialize(self, delay=1):
 		self.clear(delay=delay)
 		for table, query in self.schema['tables'].items():
@@ -85,7 +95,8 @@ class MySQLDBInstance(DBInstance):
 				print(f'Skipped {table} table creation')
 				print(e, '\n')
 			time.sleep(delay)
-	
+
+
 	def delete(self):
 		self.write(f'DROP DATABASE IF EXISTS {self.db_name}')
 		print(f'Database {self.db_name} successfully deleted')
@@ -101,6 +112,7 @@ class MySQLDBInstance(DBInstance):
 		self.cnx.commit()
 		cur.close()
 
+
 	def read(self, query, params=None, many=False, multi=False):
 		cur = self.cnx.cursor()
 		if many:
@@ -111,6 +123,7 @@ class MySQLDBInstance(DBInstance):
 		results = cur.fetchall()
 		cur.close()
 		return results
+
 
 	def read_to_pandas(self, read_sql: Callable, query: str, params=None):
 		df = read_sql(query, self.cnx, params=params)
