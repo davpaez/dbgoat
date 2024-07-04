@@ -1,5 +1,5 @@
 import time
-from typing import Callable
+from typing import Callable, Union, Literal
 
 from mysql.connector import (
 	connection as mysql_conn, 
@@ -111,6 +111,24 @@ class MySQLDBInstance(DBInstance):
 
 		self.cnx.commit()
 		cur.close()
+
+
+	def createColumn(
+		self, 
+		table_name: str,
+		col_name: str, 
+		data_type: str, 
+		options: Union[str, None] = None,
+		position: Literal['first', 'last'] = 'last'
+	) -> None:
+		statement = f"ALTER TABLE {table_name} ADD COLUMN {col_name} {data_type}"
+
+		if options is not None:
+			statement += f" {options}"
+
+		if position == 'first':
+			statement += " FIRST"
+		self.write(statement)
 
 
 	def read(self, query, params=None, many=False, multi=False):

@@ -17,8 +17,7 @@ creds = {
 	'host':"192.168.100.101",
 	'port':"10002",
 	'user':"root",
-	'password':"123456",
-	'database': 'TEST_DB'
+	'password':"123456"
 }
 
 test_dumps = {
@@ -30,20 +29,64 @@ test_dumps = {
 
 class TestMySQLDBInstance(unittest.TestCase):
 
+	@classmethod
+	def setUpClass(cls):
+		cls.dba = admin.MySQLDBAdmin(creds)
+
+
+	@classmethod
+	def tearDownClass(cls):
+		del cls.dba
+
+
 	def setUp(self) -> None:
-		self.dba = admin.MySQLDBAdmin(creds)
-		self.dba.create(creds['database'])
+		# Create empty database
+		self.dba.create('TEST_DB')
+
+		# Restore sample database
+		self.dba.restore(test_dumps['mysql']['classic'])
 	
 
 	def tearDown(self) -> None:
-		self.dba.delete(creds['database'])
+		dbs = self.dba.listAllDBs()
+		for db in dbs:
+			self.dba.delete(db)
 	
 
 	def test_constructor(self):
-		db = instance.MySQLDBInstance(**creds)
+		db = instance.MySQLDBInstance(**creds, database='TEST_DB')
 
 		# Test name
-		self.assertEqual(db.db_name, creds['database'])
+		self.assertEqual(db.db_name, 'TEST_DB')
 
 		# Test empty schema
 		self.assertIsNone(db.schema)
+	
+
+	def test_createColumn(self):
+		
+		db = instance.MySQLDBInstance(**creds, database='CLASSIC_MODELS')
+
+		# Add column in the last position, without further options
+		db.createColumn('products', 'field1', 'VARCHAR(50)')
+		columns = db.read('SHOW COLUMNS FROM products')
+		columns_names = [row[0] for row in columns]
+		self.assertIn('field1', columns_names)
+
+		# Add column in the last position, with UNIQUE constraint
+		db.createColumn('products', 'field2', 'VARCHAR(50)', 'UNIQUE')
+		columns = db.read('SHOW COLUMNS FROM products')
+		columns_names = [row[0] for row in columns]
+		self.assertIn('field2', columns_names)
+
+		# Add column in the last position, with NOT NULLconstraint
+		db.createColumn('products', 'field3', 'VARCHAR(50)', 'NOT NULL')
+		columns = db.read('SHOW COLUMNS FROM products')
+		columns_names = [row[0] for row in columns]
+		self.assertIn('field3', columns_names)
+
+		# Add column in the last position, without further options
+		db.createColumn('products', 'field4', 'VARCHAR(50)', position='first')
+		columns = db.read('SHOW COLUMNS FROM products')
+		columns_names = [row[0] for row in columns]
+		self.assertEqual('field4', columns_names[0])
