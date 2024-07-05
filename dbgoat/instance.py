@@ -143,6 +143,18 @@ class MySQLDBInstance(DBInstance):
 		return results
 
 
+	def listAllTables(self, type: Literal['base', 'view', 'all'] = 'all'):
+		query = "SHOW FULL TABLES"
+		if type == 'base':
+			query += " WHERE Table_type = 'BASE TABLE'"
+		elif type == 'view':
+			query += " WHERE Table_type = 'VIEW'"
+		
+		res = self.read(query)
+		tables_list = [item[0] for item in res]
+		return tables_list
+
+
 	def read_to_pandas(self, read_sql: Callable, query: str, params=None):
 		df = read_sql(query, self.cnx, params=params)
 		return df

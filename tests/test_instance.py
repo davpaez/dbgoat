@@ -90,3 +90,22 @@ class TestMySQLDBInstance(unittest.TestCase):
 		columns = db.read('SHOW COLUMNS FROM products')
 		columns_names = [row[0] for row in columns]
 		self.assertEqual('field4', columns_names[0])
+
+
+	def test_listAllTables(self):
+		db = instance.MySQLDBInstance(**creds, database='CLASSIC_MODELS')
+		
+		# Test base tables
+		expected_basetables = set(['customers', 'employees', 'offices', 'orderdetails', 'orders', 'payments', 'productlines', 'products'])
+		basetables = set(db.listAllTables(type='base'))
+		self.assertSetEqual(basetables, expected_basetables)
+
+		# Test views
+		expected_views = set(['OrderSummary', 'EmployeeDetails', 'ProductSales'])
+		views = set(db.listAllTables(type='view'))
+		self.assertSetEqual(views, expected_views)
+
+		# Test all tables
+		expected_tables = expected_basetables.union(views)
+		tables = set(db.listAllTables())
+		self.assertSetEqual(tables, expected_tables)

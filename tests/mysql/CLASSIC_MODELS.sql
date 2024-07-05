@@ -120,6 +120,50 @@ CREATE TABLE orderdetails (
   FOREIGN KEY (productCode) REFERENCES products (productCode)
 );
 
+/* Create the views */
+CREATE VIEW OrderSummary AS
+SELECT 
+  orders.orderNumber,
+  orders.orderDate,
+  customers.customerName,
+  customers.contactLastName,
+  customers.contactFirstName,
+  orders.status
+FROM 
+  orders
+JOIN 
+  customers ON orders.customerNumber = customers.customerNumber
+;
+
+CREATE VIEW EmployeeDetails AS
+SELECT 
+  employees.employeeNumber,
+  employees.lastName,
+  employees.firstName,
+  employees.extension,
+  employees.email,
+  offices.city AS officeCity,
+  offices.country AS officeCountry
+FROM 
+  employees
+JOIN 
+  offices ON employees.officeCode = offices.officeCode;
+
+CREATE VIEW ProductSales AS
+SELECT 
+  products.productCode,
+  products.productName,
+  orderdetails.quantityOrdered,
+  orderdetails.priceEach,
+  orders.orderDate,
+  orders.status
+FROM 
+  products
+JOIN 
+  orderdetails ON products.productCode = orderdetails.productCode
+JOIN 
+  orders ON orderdetails.orderNumber = orders.orderNumber;
+
 
 /* Inserting data  */
 insert  into productlines(productLine,textDescription,htmlDescription,image) values 
