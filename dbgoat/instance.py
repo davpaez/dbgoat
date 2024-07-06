@@ -1,5 +1,5 @@
 import time
-from typing import Callable, Union, Literal
+from typing import Callable, Union, Literal, List
 
 from mysql.connector import (
 	connection as mysql_conn, 
@@ -143,7 +143,7 @@ class MySQLDBInstance(DBInstance):
 		return results
 
 
-	def listAllTables(self, type: Literal['base', 'view', 'all'] = 'all'):
+	def listAllTables(self, type: Literal['base', 'view', 'all'] = 'all') -> List[str]:
 		query = "SHOW FULL TABLES"
 		if type == 'base':
 			query += " WHERE Table_type = 'BASE TABLE'"
