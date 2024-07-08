@@ -61,34 +61,52 @@ class TestMySQLDBInstance(unittest.TestCase):
 
 		# Test empty schema
 		self.assertIsNone(db.schema)
-	
+
+
+	def test_listAllColumns(self):
+		db = instance.MySQLDBInstance(**creds, database='CLASSIC_MODELS')
+		
+		expected_names = ['productLine', 'textDescription', 'htmlDescription', 'image']
+		expected_types = [
+			'varchar(50)',
+			'varchar(4000)',
+			'mediumtext',
+			'mediumblob'
+		]
+
+		columns = db.listAllColumns('productlines')
+		
+		# Check column names
+		self.assertListEqual([column.name for column in columns], expected_names)
+		# Check column types
+		self.assertListEqual([column.type for column in columns], expected_types)
+		
 
 	def test_createColumn(self):
-		
 		db = instance.MySQLDBInstance(**creds, database='CLASSIC_MODELS')
 
 		# Add column in the last position, without further options
 		db.createColumn('products', 'field1', 'VARCHAR(50)')
-		columns = db.read('SHOW COLUMNS FROM products')
-		columns_names = [row[0] for row in columns]
-		self.assertIn('field1', columns_names)
+		columns = db.listAllColumns('products')
+		columns_names = [column.name for column in columns]
+		self.assertEqual('field1', columns_names[-1])
 
 		# Add column in the last position, with UNIQUE constraint
 		db.createColumn('products', 'field2', 'VARCHAR(50)', 'UNIQUE')
-		columns = db.read('SHOW COLUMNS FROM products')
-		columns_names = [row[0] for row in columns]
-		self.assertIn('field2', columns_names)
+		columns = db.listAllColumns('products')
+		columns_names = [column.name for column in columns]
+		self.assertEqual('field2', columns_names[-1])
 
 		# Add column in the last position, with NOT NULLconstraint
 		db.createColumn('products', 'field3', 'VARCHAR(50)', 'NOT NULL')
-		columns = db.read('SHOW COLUMNS FROM products')
-		columns_names = [row[0] for row in columns]
-		self.assertIn('field3', columns_names)
+		columns = db.listAllColumns('products')
+		columns_names = [column.name for column in columns]
+		self.assertEqual('field3', columns_names[-1])
 
-		# Add column in the last position, without further options
+		# Add column in the first position, without further options
 		db.createColumn('products', 'field4', 'VARCHAR(50)', position='first')
-		columns = db.read('SHOW COLUMNS FROM products')
-		columns_names = [row[0] for row in columns]
+		columns = db.listAllColumns('products')
+		columns_names = [column.name for column in columns]
 		self.assertEqual('field4', columns_names[0])
 
 

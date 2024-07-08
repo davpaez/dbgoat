@@ -1,5 +1,6 @@
 import time
 from typing import Callable, Union, Literal, List
+from collections import namedtuple
 
 from mysql.connector import (
 	connection as mysql_conn, 
@@ -141,6 +142,16 @@ class MySQLDBInstance(DBInstance):
 		results = cur.fetchall()
 		cur.close()
 		return results
+	
+
+	def listAllColumns(self, table: str) -> List[namedtuple]:
+		query = f"SHOW COLUMNS FROM {table}"
+		res = self.read(query)
+
+		Column = namedtuple('Column', 'name, type')
+		columns_list = [Column(name=item[0], type=item[1]) for item in res]
+		
+		return columns_list
 
 
 	def listAllTables(self, type: Literal['base', 'view', 'all'] = 'all') -> List[str]:
