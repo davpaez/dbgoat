@@ -1,13 +1,34 @@
 import time
-from typing import Callable, Union, Literal, List
+from typing import Callable, Union, Literal, List, Any
 from collections import namedtuple
 import types
+from dataclasses import dataclass
 
 from mysql.connector import (
 	connection as mysql_conn, 
 	Error as mysql_error, 
 	errorcode as mysql_errorcode
 )
+
+
+@dataclass
+class Result:
+	statement: str
+	data: list
+	attribute_names: list
+	description: tuple
+	last_item_id: Any
+	items_count: int
+	has_items: bool
+
+	def __init__(self, cursor):
+		self.statement = cursor.statement
+		self.data = cursor.fetchall()
+		self.attribute_names = cursor.column_names
+		self.description = cursor.description
+		self.last_item_id = cursor.lastrowid
+		self.items_count = cursor.rowcount
+		self.has_items = cursor.with_rows
 
 
 class DBInstance:
