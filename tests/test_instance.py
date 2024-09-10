@@ -127,3 +127,8 @@ class TestMySQLDBInstance(unittest.TestCase):
 		expected_tables = expected_basetables.union(views)
 		tables = set(db.listAllTables())
 		self.assertSetEqual(tables, expected_tables)
+
+
+	def test_applyBatchOperation(self):
+		#TODO Implement this test
+		pass

@@ -171,5 +171,26 @@ class MySQLDBInstance(DBInstance):
 		return df
 
 
+	def applyBatchOperation(self, entity_predicates_map: dict, statement: tuple):
+		"""Execute operations based on map between entities and predicates
+		All statements with the following template are compatible:
+			PART_1 ENTITY PART_2 PREDICATE
+		where:
+		- PART_1 and PART_2 are part of the operation template and
+		- ENTITY and PREDICATE are keys and values of the `entity_predicates_map` dict
+
+		"""
+
+		for entity, predicates in entity_predicates_map.items():
+			for predicate in predicates:
+				operation = f"{statement[0]} {entity} {statement[1]} {predicate};"
+				try:
+					self.write(operation)
+					print("✅ " + operation)
+				except Exception:
+					print(f"❌ Error performing operation:\n{operation}")
+
+
+
 class SQLiteDBInstance(DBInstance):
 	pass
