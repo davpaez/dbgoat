@@ -1,6 +1,7 @@
 import time
 from typing import Callable, Union, Literal, List
 from collections import namedtuple
+import types
 
 from mysql.connector import (
 	connection as mysql_conn, 
@@ -19,7 +20,11 @@ class DBInstance:
 
 
 	def _connect(self):
-		raise Exception('You must create a "connect" function in subclass')
+		raise Exception('You must create a "_connect" function in subclass')
+	
+	
+	def _disconnect(self):
+		raise Exception('You must create a "_disconnect" function in subclass')
 
 
 	def write(self, query, params=None, many=False):
@@ -38,10 +43,18 @@ class DBInstance:
 		raise Exception('You must create a "delete" function in subclass')
 
 
+	def __enter__(self):
+		return self
+	
+
+	def __exit__(self, exc_type, exc_val, exc_tb):
+		self._disconnect()
+
+
 	def __del__(self):
 		# print('Connection closed.')
 		# if self.cnx:
-		# 	self.cnx.close() # Produces error
+		# 	self.cnx.close()  # Produces error
 		pass
 
 
@@ -70,6 +83,13 @@ class MySQLDBInstance(DBInstance):
 		else:
 			print(f"Connection established to MySQL Database named: '{database}'")
 			self.cnx = cnx
+
+
+	def _disconnect(self):
+		if self.cnx:
+			if self.cnx.is_connected():
+				self.cnx.close()
+			self.cnx = None
 
 
 	def clear(self, delay=1):
@@ -104,14 +124,29 @@ class MySQLDBInstance(DBInstance):
 
 
 	def write(self, query, params=None, many=False, multi=False):
-		cur = self.cnx.cursor()
-		if many:
-			cur.executemany(query, params)
-		else:
-			cur.execute(query, params, multi=multi)
+		if many and multi:
+			raise ValueError("The arguments `many` and `multi` cannot be simultaneously truthy")
+		
+		with self.cnx.cursor() as cur:
+			response = None
+			if many:  # type `many` coupled with parameters
+				cur.executemany(query, params)
+			else:  # simple or multi
+				response = cur.execute(query, params, multi=multi)
 
-		self.cnx.commit()
-		cur.close()
+			# Test if response is a generator-iterator object (when multi=True)
+			if isinstance(response, types.GeneratorType):
+				# Query is multi. The `response` object is a generator that produces Cursor objects
+				# one for each statement executed
+				for current_cursor in response:
+					if current_cursor.with_rows:
+						current_cursor.fetchall()  # Fetch all possible results but discard them
+			else:
+				# Query is NOT multi
+				if cur.with_rows:
+					cur.fetchall()  # Fetch possible results but discard them
+
+			self.cnx.commit()
 
 
 	def createColumn(
@@ -133,14 +168,33 @@ class MySQLDBInstance(DBInstance):
 
 
 	def read(self, query, params=None, many=False, multi=False):
-		cur = self.cnx.cursor()
-		if many:
-			pass
-		else:
-			cur.execute(query, params, multi=multi)
+		if many and multi:
+			raise ValueError("The arguments `many` and `multi` cannot be simultaneously truthy")
+		
+		with self.cnx.cursor() as cur:
+			if many:  # type `many` coupled with parameters
+				results = []
+				response = None
+				for param_tuple in params:
+					cur.execute(query, param_tuple)
+					if cur.with_rows and cur._have_unread_result():
+						results.append(cur.fetchall())
+			else:  # simple or multi
+				response = cur.execute(query, params, multi=multi)
 
-		results = cur.fetchall()
-		cur.close()
+			# Test if response is a generator (when multi=True)
+			if isinstance(response, types.GeneratorType):
+				# Query is multi
+				results = []
+				for current_cursor in response:
+					if current_cursor.with_rows:
+						results.append(current_cursor.fetchall())
+					else:
+						results.append(None)
+			elif not many:
+				# Query is simple (i.e., not multi AND not many)
+				results = cur.fetchall()
+			
 		return results
 	
 

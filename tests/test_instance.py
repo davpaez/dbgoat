@@ -129,6 +129,82 @@ class TestMySQLDBInstance(unittest.TestCase):
 		self.assertSetEqual(tables, expected_tables)
 
 
-	def test_applyBatchOperation(self):
+	def test_read(self):
+		db = instance.MySQLDBInstance(**creds, database='CLASSIC_MODELS')
+
+		text = "hello world"
+		number = 123
+		params_num = [(1,), (2,), (3,)]
+		
+		query_params = "SELECT %s"
+		query_multi = f"SELECT {number}; SELECT '{text}'"
+		query_params_multi = f"SELECT %d; SELECT '{text}'"
+
+		# Test params
+		results = db.read(query_params, params=(number,))
+		self.assertEqual(results[0][0], number)
+
+		# Test many=True
+		results = db.read(query_params, params=params_num, many=True)
+		self.assertEqual(results[0][0][0], params_num[0][0])
+		self.assertEqual(results[1][0][0], params_num[1][0])
+		self.assertEqual(results[2][0][0], params_num[2][0])
+
+		# Test multi=True
+		results = db.read(query_multi, multi=True)
+		self.assertEqual(results[0][0][0], number)
+		self.assertEqual(results[1][0][0], text)
+
+		# Test many=True and multi=True
+		with self.assertRaises(Exception):
+			db.read(query_params_multi, params=params_num, many=True, multi=True)
+
+
+	def test_write_single(self):
+		with instance.MySQLDBInstance(**creds, database='TEST_DB') as db:
+			# Create tables
+			db.write("CREATE TABLE Classes (id INTEGER PRIMARY KEY, name VARCHAR(20))")
+			db.write("""
+				CREATE TABLE Students (
+					id INTEGER, 
+					name VARCHAR(20), 
+					class_id INTEGER,
+					FOREIGN KEY (class_id) REFERENCES Classes (id)
+				)
+			""")
+			self.assertIn('Classes', db.listAllTables())
+			self.assertIn('Students', db.listAllTables())
+			self.assertEqual(len(db.listAllTables()), 2)
+
+			# Insert records
+			db.write("INSERT INTO Classes VALUES (1, 'Painting'), (2, 'Math')")
+			db.write("INSERT INTO Students VALUES (1, 'Bob', 1), (2, 'Maria', 1)")
+			results = db.read("SELECT * from Students")
+			self.assertEqual(results[0], (1, 'Bob', 1))
+			self.assertEqual(results[1], (2, 'Maria', 1))
+
+			# Delete records
+			db.write("DELETE FROM Students")
+			num_students = db.read("SELECT COUNT(id) FROM Students")[0][0]
+			self.assertEqual(num_students, 0)
+			
+			# Drop tables
+			db.write("DROP TABLE Students")
+			self.assertNotIn('Students', db.listAllTables())
+			self.assertEqual(len(db.listAllTables()), 1)
+	
+
+	def test_write_multi(self):
+		query_1 = "CREATE TABLE TestTable (field_1 INTEGER, field_2 VARCHAR(20))"
+		query_2 = "INSERT INTO TestTable VALUES (123, 'Hello world')"
+		query_multi = f"{query_1} ; {query_2}"
+
+		with instance.MySQLDBInstance(**creds, database='CLASSIC_MODELS') as db:
+			db.write(query_multi, multi=True)
+			results = db.read("SELECT * FROM TestTable")
+			self.assertTupleEqual(results[0], (123, 'Hello world'))
+
+
+	def test_write_many(self):
 		#TODO Implement this test
 		pass
