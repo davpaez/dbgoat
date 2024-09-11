@@ -34,6 +34,13 @@ test_dumps = {
 }
 
 
+class TestDBAdmin(unittest.TestCase):
+
+	def test_instantiation(self):
+		with self.assertRaises(TypeError):
+			admin.DBAdmin('somedbms', {})
+
+
 class TestMySQLDBAdmin(unittest.TestCase):
 
 	@classmethod

@@ -49,6 +49,13 @@ class CursorMock:
 		self.fetchall = fun
 
 
+class TestDBInstance(unittest.TestCase):
+
+	def test_instantiation(self):
+		with self.assertRaises(TypeError):
+			instance.DBInstance((), {})
+
+
 class TestMySQLDBInstance(unittest.TestCase):
 
 	@classmethod

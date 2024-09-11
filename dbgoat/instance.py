@@ -4,6 +4,8 @@ from collections import namedtuple
 import types
 from dataclasses import dataclass
 import logging
+from abc import ABC, abstractmethod
+
 
 from mysql.connector import (
 	connection as mysql_conn, 
@@ -51,7 +53,7 @@ class Result:
 			return data_temp
 
 
-class DBInstance:
+class DBInstance(ABC):
 	def __init__(self, *args, **kwargs):
 		# Declarar atributos compartidos
 		self.cnx = None  # connection
@@ -60,28 +62,29 @@ class DBInstance:
 		self.schema = kwargs.get('schema')
 
 
+	@abstractmethod
 	def _connect(self):
-		raise Exception('You must create a "_connect" function in subclass')
+		pass
 	
-	
+	@abstractmethod
 	def _disconnect(self):
-		raise Exception('You must create a "_disconnect" function in subclass')
+		pass
 
-
+	@abstractmethod
 	def write(self, query, params=None, many=False):
-		raise Exception('You must create a "write" function in subclass')
+		pass
 
-
+	@abstractmethod
 	def read(self, query, params=None, many=False):
-		raise Exception('You must create a "read" function in subclass')
+		pass
 
-
+	@abstractmethod
 	def initialize(self):
-		raise Exception('You must create a "initialize" function in subclass')
+		pass
 
-
+	@abstractmethod
 	def delete(self):
-		raise Exception('You must create a "delete" function in subclass')
+		pass
 
 
 	def __enter__(self):
