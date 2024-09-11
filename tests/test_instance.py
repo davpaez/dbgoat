@@ -260,3 +260,7 @@ class TestResult(unittest.TestCase):
 		cursor = CursorMock(data)
 		result = instance.Result(cursor)
 		self.assertListEqual(result.getDataSimplified(), [(123, 456), ('abc', 'def')])
+
+
+if __name__ == '__main__':
+	unittest.main()

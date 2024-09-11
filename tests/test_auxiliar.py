@@ -43,3 +43,7 @@ class TestFunctions(unittest.TestCase):
 	def test_buildCommand(self):
 		pass
 		# TODO
+
+
+if __name__ == '__main__':
+	unittest.main()
