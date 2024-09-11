@@ -143,7 +143,6 @@ class MySQLDBInstance(DBInstance):
 			except Exception as e:
 				print(f'Skipped {table} table drop')
 				print(e, '\n')
-				#print(e)
 			time.sleep(delay)
 
 
