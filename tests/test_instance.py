@@ -27,6 +27,28 @@ test_dumps = {
 }
 
 
+class CursorMock:
+	statement = None
+	column_names = None
+	description = None
+	lastrowid = None
+	rowcount = None
+	with_rows = None
+
+	def __init__(self, data):
+		def fun():
+			return data
+		
+		num_attributes = len(data[0])
+
+		self.rowcount = len(data)
+		#TODO Fix this: Generalize the ability to create arbitrary number of
+		# name columns. Right now, it is limited to the letters 'asdfghjkl'
+		self.column_names = [attr_name for row, attr_name in zip(range(num_attributes), 'asdfghjkl')]
+
+		self.fetchall = fun
+
+
 class TestMySQLDBInstance(unittest.TestCase):
 
 	@classmethod
@@ -211,3 +233,30 @@ class TestMySQLDBInstance(unittest.TestCase):
 		#TODO Implement this test
 		pass
 
+
+class TestResult(unittest.TestCase):
+
+	def test_getDataSimplified(self):
+		# ene row, one column
+		data = [(123,)]
+		cursor = CursorMock(data)
+		result = instance.Result(cursor)
+		self.assertEqual(result.getDataSimplified(), 123)
+
+		# two rows, one column
+		data = [(123,), (456,)]
+		cursor = CursorMock(data)
+		result = instance.Result(cursor)
+		self.assertListEqual(result.getDataSimplified(), [123, 456])
+
+		# one row, two columns
+		data = [(123, 456)]
+		cursor = CursorMock(data)
+		result = instance.Result(cursor)
+		self.assertTupleEqual(result.getDataSimplified(), (123, 456))
+		
+		# two rows, two columns
+		data = [(123, 456), ('abc', 'def')]
+		cursor = CursorMock(data)
+		result = instance.Result(cursor)
+		self.assertListEqual(result.getDataSimplified(), [(123, 456), ('abc', 'def')])

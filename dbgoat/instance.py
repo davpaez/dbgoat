@@ -30,6 +30,22 @@ class Result:
 		self.items_count = cursor.rowcount
 		self.has_items = cursor.with_rows
 
+	
+	def getDataSimplified(self):
+		if self.items_count == 0:
+			return None
+		else:
+			num_attributes = len(self.attribute_names)
+			data_temp = []
+			if num_attributes == 1:
+				for item in self.data:
+					data_temp.append(item[0])
+			else:
+				data_temp = self.data
+			if len(data_temp) == 1:
+				data_temp = data_temp[0]
+			return data_temp
+
 
 class DBInstance:
 	def __init__(self, *args, **kwargs):
