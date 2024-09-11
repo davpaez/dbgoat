@@ -16,7 +16,7 @@ class Result:
 	statement: str
 	data: list
 	attribute_names: list
-	description: tuple
+	schema: tuple
 	last_item_id: Any
 	items_count: int
 	has_items: bool
@@ -25,7 +25,7 @@ class Result:
 		self.statement = cursor.statement
 		self.data = cursor.fetchall()
 		self.attribute_names = cursor.column_names
-		self.description = cursor.description
+		self.schema = cursor.description
 		self.last_item_id = cursor.lastrowid
 		self.items_count = cursor.rowcount
 		self.has_items = cursor.with_rows
@@ -194,37 +194,37 @@ class MySQLDBInstance(DBInstance):
 		
 		with self.cnx.cursor() as cur:
 			if many:  # type `many` coupled with parameters
-				results = []
+				result = []
 				response = None
 				for param_tuple in params:
 					cur.execute(query, param_tuple)
 					if cur.with_rows and cur._have_unread_result():
-						results.append(cur.fetchall())
+						result.append(Result(cur))
 			else:  # simple or multi
 				response = cur.execute(query, params, multi=multi)
 
 			# Test if response is a generator (when multi=True)
 			if isinstance(response, types.GeneratorType):
 				# Query is multi
-				results = []
+				result = []  # A list of Result objects
 				for current_cursor in response:
 					if current_cursor.with_rows:
-						results.append(current_cursor.fetchall())
+						result.append(Result(cur))
 					else:
-						results.append(None)
+						result.append(None)
 			elif not many:
 				# Query is simple (i.e., not multi AND not many)
-				results = cur.fetchall()
+				result = Result(cur)
 			
-		return results
+		return result
 	
 
 	def listAllColumns(self, table: str) -> List[namedtuple]:
 		query = f"SHOW COLUMNS FROM {table}"
-		res = self.read(query)
+		result = self.read(query)
 
 		Column = namedtuple('Column', 'name, type')
-		columns_list = [Column(name=item[0], type=item[1]) for item in res]
+		columns_list = [Column(name=item[0], type=item[1]) for item in result.data]
 		
 		return columns_list
 
@@ -236,8 +236,8 @@ class MySQLDBInstance(DBInstance):
 		elif type == 'view':
 			query += " WHERE Table_type = 'VIEW'"
 		
-		res = self.read(query)
-		tables_list = [item[0] for item in res]
+		result = self.read(query)
+		tables_list = [item[0] for item in result.data]
 		return tables_list
 
 

@@ -40,6 +40,8 @@ class TestMySQLDBInstance(unittest.TestCase):
 
 
 	def setUp(self) -> None:
+		print('\n ' + '-'*50 + '\n')
+
 		# Create empty database
 		self.dba.create('TEST_DB')
 
@@ -141,19 +143,19 @@ class TestMySQLDBInstance(unittest.TestCase):
 		query_params_multi = f"SELECT %d; SELECT '{text}'"
 
 		# Test params
-		results = db.read(query_params, params=(number,))
-		self.assertEqual(results[0][0], number)
+		result = db.read(query_params, params=(number,))
+		self.assertEqual(result.data[0][0], number)
 
 		# Test many=True
 		results = db.read(query_params, params=params_num, many=True)
-		self.assertEqual(results[0][0][0], params_num[0][0])
-		self.assertEqual(results[1][0][0], params_num[1][0])
-		self.assertEqual(results[2][0][0], params_num[2][0])
+		self.assertEqual(results[0].data[0][0], params_num[0][0])
+		self.assertEqual(results[1].data[0][0], params_num[1][0])
+		self.assertEqual(results[2].data[0][0], params_num[2][0])
 
 		# Test multi=True
 		results = db.read(query_multi, multi=True)
-		self.assertEqual(results[0][0][0], number)
-		self.assertEqual(results[1][0][0], text)
+		self.assertEqual(results[0].data[0][0], number)
+		self.assertEqual(results[1].data[0][0], text)
 
 		# Test many=True and multi=True
 		with self.assertRaises(Exception):
@@ -179,14 +181,14 @@ class TestMySQLDBInstance(unittest.TestCase):
 			# Insert records
 			db.write("INSERT INTO Classes VALUES (1, 'Painting'), (2, 'Math')")
 			db.write("INSERT INTO Students VALUES (1, 'Bob', 1), (2, 'Maria', 1)")
-			results = db.read("SELECT * from Students")
-			self.assertEqual(results[0], (1, 'Bob', 1))
-			self.assertEqual(results[1], (2, 'Maria', 1))
+			result = db.read("SELECT * from Students")
+			self.assertEqual(result.data[0], (1, 'Bob', 1))
+			self.assertEqual(result.data[1], (2, 'Maria', 1))
 
 			# Delete records
 			db.write("DELETE FROM Students")
-			num_students = db.read("SELECT COUNT(id) FROM Students")[0][0]
-			self.assertEqual(num_students, 0)
+			result = db.read("SELECT COUNT(id) FROM Students")
+			self.assertEqual(result.data[0][0], 0)
 			
 			# Drop tables
 			db.write("DROP TABLE Students")
@@ -201,10 +203,11 @@ class TestMySQLDBInstance(unittest.TestCase):
 
 		with instance.MySQLDBInstance(**creds, database='CLASSIC_MODELS') as db:
 			db.write(query_multi, multi=True)
-			results = db.read("SELECT * FROM TestTable")
-			self.assertTupleEqual(results[0], (123, 'Hello world'))
+			result = db.read("SELECT * FROM TestTable")
+			self.assertTupleEqual(result.data[0], (123, 'Hello world'))
 
 
 	def test_write_many(self):
 		#TODO Implement this test
 		pass
+
