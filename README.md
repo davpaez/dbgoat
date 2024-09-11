@@ -16,3 +16,7 @@ Supported database engines:
 - MySQL
 
 More databases will be supported in the future 😎
+
+
+# Useful references:
+- [PEP 249 – Python Database API Specification v2.0](https://peps.python.org/pep-0249/)
