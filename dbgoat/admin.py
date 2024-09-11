@@ -29,7 +29,7 @@ class DBAdmin(ABC):
 			if not (set(required_keys) <= set(creds.keys())):
 				raise ValueError("Invalid parameters to construct DBAdmin instance")
 			else:
-				logger.warn("The 'database' argument was ignored for constructing the DBAdmin instance")
+				logger.warning("The 'database' argument was ignored for constructing the DBAdmin instance")
 		
 		sanitized_creds = {key: creds[key] for key in required_keys}
 		self.options_values = sanitized_creds.copy()
@@ -187,7 +187,7 @@ class MySQLDBAdmin(DBAdmin):
 		"""Create a MySQL database"""
 		if db_name in self.listAllDBs():
 			if overwrite:
-				logger.warn(f"Database '{db_name}' already exists. It will be deleted and recreated")
+				logger.warning(f"Database '{db_name}' already exists. It will be deleted and recreated")
 				self.delete(db_name)
 			else:
 				raise ValueError(f"Database '{db_name}' already exists")
@@ -214,7 +214,7 @@ class MySQLDBAdmin(DBAdmin):
 			self.cnx.commit()
 			logger.info(f'Database {db_name} successfully deleted')
 		else:
-			logger.warn(f"No operation was performed. The database '{db_name}' does not exist")
+			logger.warning(f"No operation was performed. The database '{db_name}' does not exist")
 			warnings.warn(
 				message=f"No operation was performed. The database '{db_name}' does not exist",
 				category=RuntimeWarning
