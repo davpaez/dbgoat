@@ -48,17 +48,8 @@ class DBAdmin(ABC):
 		self._connect(sanitized_creds)
 
 
-	def closeConnection(self):
-		if self.cnx:
-			if self.cnx.is_connected():
-				id_cnx = id(self.cnx)
-				self.cnx.close()
-			self.cnx = None
-			logger.info(f'Connection id={id_cnx} closed')
-
-
 	def __del__(self):
-		# self.closeConnection() # Produces error!
+		# self._disconnect()  # Produces error?
 		pass
 	
 
@@ -67,7 +58,7 @@ class DBAdmin(ABC):
 	
 
 	def __exit__(self, exc_type, exc_value, traceback):
-		self.closeConnection()
+		self._disconnect()
 	
 	
 	def buildCommand(self, tool: str, **kwargs):
@@ -145,6 +136,10 @@ class DBAdmin(ABC):
 	def _connect(self, creds):
 		pass
 
+	@abstractmethod
+	def _disconnect(self):
+		pass
+
 
 
 class MySQLDBAdmin(DBAdmin):
@@ -181,6 +176,15 @@ class MySQLDBAdmin(DBAdmin):
 			id_cnx = id(cnx)
 			logger.info(f"Connection id={id_cnx} established to MySQL Server")
 			self.cnx = cnx
+
+
+	def _disconnect(self):
+		if self.cnx:
+			if self.cnx.is_connected():
+				id_cnx = id(self.cnx)
+				self.cnx.close()
+			self.cnx = None
+			logger.info(f'Connection id={id_cnx} closed')
 
 
 	def create(self, db_name: str, overwrite=False) -> None:
