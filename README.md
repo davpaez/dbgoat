@@ -18,5 +18,13 @@ Supported database engines:
 More databases will be supported in the future 😎
 
 
+# Tests
+
+To run all tests from the command line, from the project's root directory run the following command:
+```
+python -m unittest discover -s tests -p "test_*.py" -t .
+```
+
+
 # Useful references:
 - [PEP 249 – Python Database API Specification v2.0](https://peps.python.org/pep-0249/)
