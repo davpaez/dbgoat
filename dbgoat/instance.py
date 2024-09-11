@@ -3,12 +3,16 @@ from typing import Callable, Union, Literal, List, Any
 from collections import namedtuple
 import types
 from dataclasses import dataclass
+import logging
 
 from mysql.connector import (
 	connection as mysql_conn, 
 	Error as mysql_error, 
 	errorcode as mysql_errorcode
 )
+
+
+logger = logging.getLogger('dbgoat')
 
 
 @dataclass
