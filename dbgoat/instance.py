@@ -93,9 +93,7 @@ class DBInstance:
 
 
 	def __del__(self):
-		# print('Connection closed.')
-		# if self.cnx:
-		# 	self.cnx.close()  # Produces error
+		# self._disconnect()   # Produces error?
 		pass
 
 
@@ -129,8 +127,10 @@ class MySQLDBInstance(DBInstance):
 	def _disconnect(self):
 		if self.cnx:
 			if self.cnx.is_connected():
+				id_cnx = id(self.cnx)
 				self.cnx.close()
 			self.cnx = None
+			logger.info(f'Connection id={id_cnx} closed')
 
 
 	def clear(self, delay=1):
