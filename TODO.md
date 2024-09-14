@@ -10,5 +10,6 @@
 [ ] Add support for multiple databases
 	[ ] SQLite
 	[ ] PostgreSQL
+	[ ] DuckDB
 
 [ ] Create long-lived, self-healing connections
