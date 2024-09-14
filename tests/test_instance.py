@@ -237,8 +237,24 @@ class TestMySQLDBInstance(unittest.TestCase):
 
 
 	def test_write_many(self):
-		#TODO Implement this test
-		pass
+		query_1 = "CREATE TABLE TestTable (field_1 INTEGER, field_2 VARCHAR(20))"
+		query_2 = "INSERT INTO TestTable VALUES (%s, %s)"
+		
+		values = [
+			(1, 'hello'),
+			(2, 'hola'),
+			(3, 'ciao'),
+		]
+
+		with instance.MySQLDBInstance(**creds, database='CLASSIC_MODELS') as db:
+			# Single write to create table
+			db.write(query_1)
+
+			# Parametrized INSERT query
+			db.write(query_2, params=values, many=True)
+
+			# Parametrized non-INSERT query
+			#TODO
 
 
 class TestResult(unittest.TestCase):
