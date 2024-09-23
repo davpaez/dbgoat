@@ -295,9 +295,9 @@ class MySQLDBAdmin(DBAdmin):
 		return db_name, sql_text
 
 
-	def restore(self, input_file: str, db_name: Optional[str] = None) -> str:
+	def restore(self, input_file: str, db_name: Optional[str] = None, overwrite: bool = False) -> str:
 		"""Restore a MySQL database from a file
-		It is extpected that the input file contains at least a
+		It is expected that the input file contains at least a
 		CREATE DATABASE statement from which the name of the database can be
 		extracted
 		Returns the name of the database restored
@@ -308,7 +308,7 @@ class MySQLDBAdmin(DBAdmin):
 
 		db_name, sql_text = self.transformDump(db_name, sql_text)
 
-		self.create(db_name)
+		self.create(db_name, overwrite=overwrite)
 
 		self.issueCommand(
 			'main',
