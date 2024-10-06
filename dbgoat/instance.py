@@ -190,6 +190,16 @@ class MySQLDBInstance(DBInstance):
 					cur.fetchall()  # Fetch possible results but discard them
 
 			self.cnx.commit()
+	
+
+	def applyScript(self, file_path: str, encoding='utf-8'):
+		with open(file_path, 'r', encoding=encoding) as file:
+			sql_script = file.read()
+			try:
+				self.write(sql_script, multi=True)
+			except Exception as e:
+				print("Error while applying the SQL script")
+				print(e)
 
 
 	def createColumn(
