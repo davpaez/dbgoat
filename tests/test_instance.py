@@ -239,11 +239,18 @@ class TestMySQLDBInstance(unittest.TestCase):
 	def test_write_many(self):
 		query_1 = "CREATE TABLE TestTable (field_1 INTEGER, field_2 VARCHAR(20))"
 		query_2 = "INSERT INTO TestTable VALUES (%s, %s)"
+		query_3 = "UPDATE TestTable SET field_2 = (%s) WHERE field_1 = (%s)"
 		
-		values = [
+		values_q2 = [
 			(1, 'hello'),
 			(2, 'hola'),
-			(3, 'ciao'),
+			(3, 'ciao')
+		]
+
+		values_q3 = [
+			('hello world', 1),
+			('hola mundo', 2),
+			('ciao tutti', 3)
 		]
 
 		with instance.MySQLDBInstance(**creds, database='CLASSIC_MODELS') as db:
@@ -251,10 +258,18 @@ class TestMySQLDBInstance(unittest.TestCase):
 			db.write(query_1)
 
 			# Parametrized INSERT query
-			db.write(query_2, params=values, many=True)
+			db.write(query_2, params=values_q2, many=True)
+			result = db.read("SELECT * FROM TestTable")
+			self.assertTupleEqual(result.data[0], values_q2[0])
+			self.assertTupleEqual(result.data[1], values_q2[1])
+			self.assertTupleEqual(result.data[2], values_q2[2])
 
 			# Parametrized non-INSERT query
-			#TODO
+			db.write(query_3, params=values_q3, many=True)
+			result = db.read("SELECT field_2, field_1 FROM TestTable")
+			self.assertTupleEqual(result.data[0], values_q3[0])
+			self.assertTupleEqual(result.data[1], values_q3[1])
+			self.assertTupleEqual(result.data[2], values_q3[2])
 
 
 class TestResult(unittest.TestCase):
